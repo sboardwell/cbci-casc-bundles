@@ -1,0 +1,75 @@
+credentials:
+  system:
+    domainCredentials:
+    - credentials:
+      - file:
+          description: "Local sa-jenkins"
+          fileName: "sa-jenkins-local.yaml"
+          id: "sa-jenkins-local"
+          scope: GLOBAL
+          secretBytes: "${sa-jenkins-local.yaml}"
+      - file:
+          description: "Remote sa-jenkins"
+          fileName: "sa-jenkins-remote.yaml"
+          id: "sa-jenkins-remote"
+          scope: GLOBAL
+          secretBytes: "${sa-jenkins-remote.yaml}"
+jenkins:
+  systemMessage: "Configured automatically by Configuration as Code for Controllers (2.332.3)\n\n"
+  clouds:
+  - kubernetes:
+      containerCap: 10
+      containerCapStr: "10"
+      credentialsId: "sa-jenkins-remote"
+      jenkinsUrl: "${sa-jenkins-local-jenkins-url}" # local is correct here
+      name: "kubernetes-remote"
+      namespace: "${sa-jenkins-remote-namespace}"
+      podLabels:
+      - key: "datacenter-type"
+        value: "remote"
+      templates:
+      - containers:
+        - args: "9999999"
+          command: "sleep"
+          image: "debian"
+          livenessProbe:
+            failureThreshold: 0
+            initialDelaySeconds: 0
+            periodSeconds: 0
+            successThreshold: 0
+            timeoutSeconds: 0
+          name: "debian"
+          workingDir: "/home/jenkins/agent"
+        label: "debian-remote"
+        name: "debian-remote"
+        yamlMergeStrategy: "override"
+      webSocket: true
+  - kubernetes:
+      containerCap: 10
+      containerCapStr: "10"
+      credentialsId: "sa-jenkins-local"
+      jenkinsUrl: "${KUBERNETES_JENKINS_URL}"
+      name: "kubernetes-local"
+      namespace: "${sa-jenkins-local-namespace}"
+      templates:
+      - containers:
+        - args: "9999999"
+          command: "sleep"
+          image: "debian"
+          livenessProbe:
+            failureThreshold: 0
+            initialDelaySeconds: 0
+            periodSeconds: 0
+            successThreshold: 0
+            timeoutSeconds: 0
+          name: "debian"
+          workingDir: "/home/jenkins/agent"
+        label: "debian-local"
+        name: "debian-local"
+        yamlMergeStrategy: "override"
+notificationConfiguration:
+  enabled: true
+  router: operationsCenter
+unclassified:
+  cloudbeesPrometheus:
+    collectingMetricsPeriodInSeconds: 30
