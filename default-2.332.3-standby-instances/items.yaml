@@ -1,0 +1,57 @@
+removeStrategy:
+  items: 'NONE'
+  rbac: 'SYNC'
+
+items:
+  - kind: pipeline
+    name: test-1
+    concurrentBuild: false
+    definition:
+      cpsFlowDefinition:
+        sandbox: true
+        script: |
+          // Uses Declarative syntax to run commands inside a container.
+          pipeline {
+              agent {
+                  label 'debian-remote'
+              }
+              stages {
+                  stage('Parallel Stage') {
+                      failFast true
+                      parallel {
+                          stage('MainRemote') {
+                              agent {
+                                  label 'debian-remote'
+                              }
+                              steps {
+                                  container('debian') {
+                                      sh 'hostname'
+                                  }
+                              }
+                          }
+                          stage('MainLocal') {
+                              agent {
+                                  label 'debian-local'
+                              }
+                              steps {
+                                  container('debian') {
+                                      sh 'hostname'
+                                  }
+                              }
+                          }
+                      }
+                  }
+              }
+          }
+    description: ''
+    disabled: false
+    displayName: test-1
+    properties:
+    - buildDiscarder:
+        strategy:
+          logRotator:
+            artifactDaysToKeep: -1
+            artifactNumToKeep: -1
+            daysToKeep: 2
+            numToKeep: 10
+    resumeBlocked: false

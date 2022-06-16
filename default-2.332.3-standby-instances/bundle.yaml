@@ -7,6 +7,8 @@ version: '1'
 parent: 'default-global'
 jcasc:
   - 'jenkins.yaml'
+items:
+  - 'items.yaml'
 plugins:
   - 'plugins.yaml'
 catalog:
