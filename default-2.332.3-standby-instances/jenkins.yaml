@@ -7,13 +7,13 @@ credentials:
           fileName: "sa-jenkins-local.yaml"
           id: "sa-jenkins-local"
           scope: GLOBAL
-          secretBytes: "${sa-jenkins-local.yaml}"
+          secretBytes: "${base64:${sa-jenkins-local.yaml}}"
       - file:
           description: "Remote sa-jenkins"
           fileName: "sa-jenkins-remote.yaml"
           id: "sa-jenkins-remote"
           scope: GLOBAL
-          secretBytes: "${sa-jenkins-remote.yaml}"
+          secretBytes: "${base64:${sa-jenkins-remote.yaml}}"
 jenkins:
   systemMessage: "Configured automatically by Configuration as Code for Controllers (2.332.3)\n\n"
   clouds:
