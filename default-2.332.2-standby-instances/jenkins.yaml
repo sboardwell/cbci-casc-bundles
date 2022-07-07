@@ -82,3 +82,11 @@ notificationConfiguration:
 unclassified:
   cloudbeesPrometheus:
     collectingMetricsPeriodInSeconds: 30
+  bitbucketEndpointConfiguration:
+    endpoints:
+    - bitbucketServerEndpoint:
+        credentialsId: "bitbucket-admin-token"
+        displayName: "beescloud-bitbucket"
+        manageHooks: true
+        serverUrl: "https://bitbucket.beescloud.com"
+        webhookImplementation: NATIVE
