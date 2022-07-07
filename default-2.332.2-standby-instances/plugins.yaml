@@ -1,6 +1,7 @@
 plugins:
   - id: ace-editor
   - id: apache-httpcomponents-client-4-api
+  - id: atlassian-bitbucket-server-integration
   - id: authentication-tokens
   - id: aws-credentials
   - id: aws-java-sdk-ec2
