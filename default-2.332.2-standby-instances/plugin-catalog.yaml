@@ -7,3 +7,11 @@ configurations:
     includePlugins:
       cloudbees-prometheus:
         version: '1.0'
+      atlassian-bitbucket-server-integration:
+        version: '3.2.2'
+      bitbucket:
+        version: '223.vd12f2bca5430'
+      job-dsl:
+        version: '1.80'
+      bitbucket-kubernetes-credentials:
+        version: '0.0.4'
