@@ -16,13 +16,13 @@ credentials:
           secretBytes: "${base64:${sa-jenkins-remote.yaml}}"
       - usernamePassword:
           id: "bitbucket-admin-token"
-          password: "${decodeBase64:${bitbucket-admin-token}}"
+          password: "${bitbucket-admin-token}"
           scope: GLOBAL
           username: "support-team"
       - bitbucketToken:
           description: "Project admin PAT for TSMEM"
           id: "bitbucket-beescloud-pat"
-          secret: "${decodeBase64:${bitbucket-admin-token}}"
+          secret: "${bitbucket-admin-token}"
 jenkins:
   systemMessage: "Configured automatically by Configuration as Code for Controllers (2.332.3)\n\n"
   clouds:
