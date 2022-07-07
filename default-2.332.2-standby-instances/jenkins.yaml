@@ -90,3 +90,9 @@ unclassified:
         manageHooks: true
         serverUrl: "https://bitbucket.beescloud.com"
         webhookImplementation: NATIVE
+  bitbucketPluginConfiguration:
+    serverList:
+    - adminCredentialsId: "bitbucket-beescloud-pat"
+      baseUrl: "https://bitbucket.beescloud.com"
+      id: "d32f1634-db76-4318-8d6b-52f8001176b5"
+      serverName: "bitbucket-beescloud"
