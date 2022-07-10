@@ -4,7 +4,7 @@ credentials:
     - credentials:
       - usernamePassword:
           id: "github-token-as-user-pass"
-          password: "${githubToken}"
+          password: "${decodeBase64:${githubToken}}"
           scope: GLOBAL
           username: "sboardwell"
       - string:
