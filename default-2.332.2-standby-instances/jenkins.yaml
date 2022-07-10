@@ -213,30 +213,47 @@ jobs:
   - script: |
       queue('bb-example')
   - script: |
-      organizationFolder('bb-example') {
-          description('This contains branch source jobs for Bitbucket')
-          displayName('Example Org BB')
+      organizationFolder('example-gh') {
+          description('This contains branch source jobs for GitHub')
+          displayName('Example Org GH')
           organizations {
-              bitbucket {
-                  // Specify the name of the Bitbucket Team or Bitbucket User Account.
-                  repoOwner('TSMEM')
+              github {
                   // The server to connect to.
-                  serverUrl('https://bitbucket.beescloud.com')
-                  credentialsId('bitbucket-admin-token')
+                  apiUri('https://api.github.com')
+                  // Specify the name of the GitHub Organization or GitHub User Account.
+                  repoOwner('lostinberlin-org')
+                  // Credentials used to scan branches and pull requests, check out sources and mark commit statuses.
+                  credentialsId('github-token-as-user-pass')
+                  // The behaviours control what is discovered from the GitHub server.
                   traits {
-                      sourceRegexFilter {
-                          // A Java regular expression to restrict the project names.
-                          regex('^(tsm-266-003|tsm-266-004)$')
-                      }
                       // Discovers branches on the repository.
-                      bitbucketBranchDiscovery {
+                      gitHubBranchDiscovery {
                           // Determines which branches are discovered.
                           strategyId(0)
                       }
+                      gitHubExcludeArchivedRepositories()
+                      gitHubExcludeForkedRepositories()
+                      gitHubExcludePublicRepositories()
+                      gitHubIgnoreDraftPullRequestFilter()
                       // Discovers pull requests where the origin repository is the same as the target repository.
-                      bitbucketPullRequestDiscovery {
-                          // Determines how pull requests are discovered.
+                      gitHubPullRequestDiscovery {
+                          // Determines how pull requests are discovered: Merging the pull request with the current target branch revision Discover each pull request once with the discovered revision corresponding to the result of merging with the current revision of the target branch.
                           strategyId(3)
+                      }
+                      // Discovers tags on the repository.
+                      gitHubTagDiscovery()
+                      // Discovers tags on the repository.
+                      gitTagDiscovery()
+                      headRegexFilter {
+                          // A Java regular expression to restrict the names.
+                          regex('.*')
+                      }
+                      ignoreOnPushNotificationTrait()
+                      pruneStaleBranchTrait()
+                      pruneStaleTagTrait()
+                      sourceRegexFilter {
+                          // A Java regular expression to restrict the project names.
+                          regex('^(test.*|next-project.*)$')
                       }
                   }
               }
@@ -263,7 +280,7 @@ jobs:
           projectFactories {
               customMultiBranchProjectFactory {
                   factory {
-                      marker('Jenkinsfile.TSM-266')
+                      marker('jetstream.yaml')
                       definition {
                           cpsScmFlowDefinition {
                               // Specify where to obtain a source code repository containing your Groovy script.
@@ -273,7 +290,7 @@ jobs:
                                       // List of branches to build.
                                       branches {
                                           branchSpec {
-                                              name('*/sboardwell-patch-1')
+                                              name('*/main')
                                           }
                                       }
                                       userRemoteConfigs {
@@ -303,12 +320,6 @@ jobs:
           }
           // Adds build triggers to the job.
           triggers {
-              BitbucketWebhookMultibranchTrigger {
-                  // This triggers a branch scan after a pull request is opened, it also updates builds by disabling builds after a pull request is declined, deleted, or merged.
-                  pullRequestTrigger(true)
-                  // This triggers a branch scan after new code is pushed.
-                  refTrigger(true)
-              }
               // Some kinds of folders are reindexed automatically and immediately upon receipt of an external event.
               periodicFolderTrigger {
                   // The maximum amount of time since the last indexing that is allowed to elapse before an indexing is triggered.
@@ -317,4 +328,4 @@ jobs:
           }
       }
   - script: |
-      queue('bb-example')
+      queue('gh-example')
