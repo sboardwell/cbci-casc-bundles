@@ -15,6 +15,5 @@ configurations:
         version: '1.80'
       bitbucket-kubernetes-credentials:
         version: '0.0.4'
-      # dependencies
-      kubernetes-credentials-provider:
+      kubernetes-credentials-provider: # dependencies atlassian-bitbucket-server-integration
         version: '0.14'
