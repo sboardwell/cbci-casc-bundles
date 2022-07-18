@@ -1,0 +1,302 @@
+credentials:
+  system:
+    domainCredentials:
+    - credentials:
+      - usernamePassword:
+          id: "github-token-as-user-pass"
+          password: "${decodeBase64:${githubToken}}"
+          scope: GLOBAL
+          username: "sboardwell"
+      - string:
+          id: "github-token"
+          scope: GLOBAL
+          secret: ${githubToken}
+      - file:
+          description: "Local sa-jenkins"
+          fileName: "sa-jenkins-local.yaml"
+          id: "sa-jenkins-local"
+          scope: GLOBAL
+          secretBytes: "${base64:${sa-jenkins-local.yaml}}"
+      - file:
+          description: "Remote sa-jenkins"
+          fileName: "sa-jenkins-remote.yaml"
+          id: "sa-jenkins-remote"
+          scope: GLOBAL
+          secretBytes: "${base64:${sa-jenkins-remote.yaml}}"
+      - usernamePassword:
+          id: "bitbucket-admin-token"
+          password: "${bitbucket-admin-token}"
+          scope: GLOBAL
+          username: "support-team"
+      - bitbucketToken:
+          description: "Project admin PAT for TSMEM"
+          id: "bitbucket-beescloud-pat"
+          secret: "${bitbucket-admin-token}"
+jenkins:
+  systemMessage: "Configured automatically by Configuration as Code for Controllers (2.332.3)\n\n"
+kube:
+  podTemplatesConfiguration:
+    templates:
+    - containers:
+      - args: "9999999"
+        command: "sleep"
+        image: "debian"
+        livenessProbe:
+          failureThreshold: 0
+          initialDelaySeconds: 0
+          periodSeconds: 0
+          successThreshold: 0
+          timeoutSeconds: 0
+        name: "debian"
+        resourceLimitCpu: "1"
+        resourceLimitMemory: "400Mi"
+        resourceRequestCpu: "0.5"
+        resourceRequestMemory: "200Mi"
+        workingDir: "/home/jenkins/agent"
+      label: "debian-default"
+      name: "debian-default"
+      yamlMergeStrategy: "override"
+notificationConfiguration:
+  enabled: true
+  router: operationsCenter
+unclassified:
+  cloudbeesPrometheus:
+    collectingMetricsPeriodInSeconds: 30
+  bitbucketEndpointConfiguration:
+    endpoints:
+    - bitbucketServerEndpoint:
+        credentialsId: "bitbucket-admin-token"
+        displayName: "beescloud-bitbucket"
+        manageHooks: true
+        serverUrl: "https://bitbucket.beescloud.com"
+        webhookImplementation: NATIVE
+  bitbucketPluginConfiguration:
+    serverList:
+    - adminCredentialsId: "bitbucket-beescloud-pat"
+      baseUrl: "https://bitbucket.beescloud.com"
+      id: "d32f1634-db76-4318-8d6b-52f8001176b5"
+      serverName: "bitbucket-beescloud"
+jobs:
+  - script: |
+      organizationFolder('bb-example') {
+          description('This contains branch source jobs for Bitbucket')
+          displayName('Example Org BB')
+          organizations {
+              bitbucket {
+                  // Specify the name of the Bitbucket Team or Bitbucket User Account.
+                  repoOwner('TSMEM')
+                  // The server to connect to.
+                  serverUrl('https://bitbucket.beescloud.com')
+                  credentialsId('bitbucket-admin-token')
+                  traits {
+                      sourceRegexFilter {
+                          // A Java regular expression to restrict the project names.
+                          regex('^(tsm-266-003|tsm-266-004)$')
+                      }
+                      // Discovers branches on the repository.
+                      bitbucketBranchDiscovery {
+                          // Determines which branches are discovered.
+                          strategyId(0)
+                      }
+                      // Discovers pull requests where the origin repository is the same as the target repository.
+                      bitbucketPullRequestDiscovery {
+                          // Determines how pull requests are discovered.
+                          strategyId(3)
+                      }
+                  }
+              }
+          }
+          // Sets the orphaned branch strategy.
+          orphanedItemStrategy {
+              // Trims dead items by the number of days or the number of items.
+              discardOldItems {
+                  // Sets the number of days to keep old items.
+                  daysToKeep(10)
+                  // Sets the number of old items to keep.
+                  numToKeep(10)
+              }
+              defaultOrphanedItemStrategy {
+                  pruneDeadBranches(true)
+                  daysToKeepStr('10')
+                  numToKeepStr('10')
+                  // Abort all pending or ongoing builds
+                  abortBuilds(true)
+              }
+              inherit()
+          }
+          // Sets the project factories for this folder.
+          projectFactories {
+              customMultiBranchProjectFactory {
+                  factory {
+                      marker('Jenkinsfile.TSM-266')
+                      definition {
+                          cpsScmFlowDefinition {
+                              // Specify where to obtain a source code repository containing your Groovy script.
+                              scm {
+                                  // The git plugin provides fundamental git operations for Jenkins projects.
+                                  gitSCM {
+                                      // List of branches to build.
+                                      branches {
+                                          branchSpec {
+                                              name('*/sboardwell-patch-1')
+                                          }
+                                      }
+                                      userRemoteConfigs {
+                                          userRemoteConfig {
+                                              // Specify the URL or path of the git repository.
+                                              url('https://github.com/lostinberlin-org/pipeline-mgmt.git')
+                                              // ID of the repository, such as origin, to uniquely identify this repository among other remote repositories.
+                                              name('origin')
+                                              // A refspec controls the remote refs to be retrieved and how they map to local refs.
+                                              refspec('+refs/heads/*:refs/remotes/origin/*')
+                                              // Credential used to check out sources.
+                                              credentialsId('github-token-as-user-pass')
+                                          }
+                                      }
+                                      browser {}
+                                      gitTool('/usr/bin/env git')
+                                  }
+                              }
+                              // Relative location (/-separated regardless of platform) within the checkout of your Pipeline script.
+                              scriptPath('CentralPipelineRunner.groovy')
+                              // If selected, try to obtain the Pipeline script contents directly from the SCM without performing a full checkout.
+                              lightweight(true)
+                          }
+                      }
+                  }
+              }
+          }
+          // Adds build triggers to the job.
+          triggers {
+              BitbucketWebhookMultibranchTrigger {
+                  // This triggers a branch scan after a pull request is opened, it also updates builds by disabling builds after a pull request is declined, deleted, or merged.
+                  pullRequestTrigger(true)
+                  // This triggers a branch scan after new code is pushed.
+                  refTrigger(true)
+              }
+              // Some kinds of folders are reindexed automatically and immediately upon receipt of an external event.
+              periodicFolderTrigger {
+                  // The maximum amount of time since the last indexing that is allowed to elapse before an indexing is triggered.
+                  interval('1d')
+              }
+          }
+      }
+  - script: |
+      queue('bb-example')
+  - script: |
+      organizationFolder('example-gh') {
+          description('This contains branch source jobs for GitHub')
+          displayName('Example Org GH')
+          organizations {
+              github {
+                  // The server to connect to.
+                  apiUri('https://api.github.com')
+                  // Specify the name of the GitHub Organization or GitHub User Account.
+                  repoOwner('lostinberlin-org')
+                  // Credentials used to scan branches and pull requests, check out sources and mark commit statuses.
+                  credentialsId('github-token-as-user-pass')
+                  // The behaviours control what is discovered from the GitHub server.
+                  traits {
+                      // Discovers branches on the repository.
+                      gitHubBranchDiscovery {
+                          // Determines which branches are discovered.
+                          strategyId(0)
+                      }
+                      gitHubExcludeArchivedRepositories()
+                      gitHubExcludeForkedRepositories()
+                      gitHubExcludePublicRepositories()
+                      gitHubIgnoreDraftPullRequestFilter()
+                      // Discovers pull requests where the origin repository is the same as the target repository.
+                      gitHubPullRequestDiscovery {
+                          // Determines how pull requests are discovered: Merging the pull request with the current target branch revision Discover each pull request once with the discovered revision corresponding to the result of merging with the current revision of the target branch.
+                          strategyId(3)
+                      }
+                      // Discovers tags on the repository.
+                      gitHubTagDiscovery()
+                      // Discovers tags on the repository.
+                      gitTagDiscovery()
+                      headRegexFilter {
+                          // A Java regular expression to restrict the names.
+                          regex('.*')
+                      }
+                      ignoreOnPushNotificationTrait()
+                      pruneStaleBranchTrait()
+                      pruneStaleTagTrait()
+                      sourceRegexFilter {
+                          // A Java regular expression to restrict the project names.
+                          regex('^(test.*|next-project.*)$')
+                      }
+                  }
+              }
+          }
+          // Sets the orphaned branch strategy.
+          orphanedItemStrategy {
+              // Trims dead items by the number of days or the number of items.
+              discardOldItems {
+                  // Sets the number of days to keep old items.
+                  daysToKeep(10)
+                  // Sets the number of old items to keep.
+                  numToKeep(10)
+              }
+              defaultOrphanedItemStrategy {
+                  pruneDeadBranches(true)
+                  daysToKeepStr('10')
+                  numToKeepStr('10')
+                  // Abort all pending or ongoing builds
+                  abortBuilds(true)
+              }
+              inherit()
+          }
+          // Sets the project factories for this folder.
+          projectFactories {
+              customMultiBranchProjectFactory {
+                  factory {
+                      marker('jetstream.yaml')
+                      definition {
+                          cpsScmFlowDefinition {
+                              // Specify where to obtain a source code repository containing your Groovy script.
+                              scm {
+                                  // The git plugin provides fundamental git operations for Jenkins projects.
+                                  gitSCM {
+                                      // List of branches to build.
+                                      branches {
+                                          branchSpec {
+                                              name('*/main')
+                                          }
+                                      }
+                                      userRemoteConfigs {
+                                          userRemoteConfig {
+                                              // Specify the URL or path of the git repository.
+                                              url('https://github.com/lostinberlin-org/pipeline-mgmt.git')
+                                              // ID of the repository, such as origin, to uniquely identify this repository among other remote repositories.
+                                              name('origin')
+                                              // A refspec controls the remote refs to be retrieved and how they map to local refs.
+                                              refspec('+refs/heads/*:refs/remotes/origin/*')
+                                              // Credential used to check out sources.
+                                              credentialsId('github-token-as-user-pass')
+                                          }
+                                      }
+                                      browser {}
+                                      gitTool('/usr/bin/env git')
+                                  }
+                              }
+                              // Relative location (/-separated regardless of platform) within the checkout of your Pipeline script.
+                              scriptPath('CentralPipelineRunner.groovy')
+                              // If selected, try to obtain the Pipeline script contents directly from the SCM without performing a full checkout.
+                              lightweight(true)
+                          }
+                      }
+                  }
+              }
+          }
+          // Adds build triggers to the job.
+          triggers {
+              // Some kinds of folders are reindexed automatically and immediately upon receipt of an external event.
+              periodicFolderTrigger {
+                  // The maximum amount of time since the last indexing that is allowed to elapse before an indexing is triggered.
+                  interval('1d')
+              }
+          }
+      }
+  - script: |
+      queue('gh-example')

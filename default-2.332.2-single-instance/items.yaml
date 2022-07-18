@@ -1,0 +1,283 @@
+removeStrategy:
+  items: 'NONE'
+  rbac: 'SYNC'
+
+items:
+  - kind: freeStyle
+    name: test-fs
+    blockBuildWhenDownstreamBuilding: false
+    blockBuildWhenUpstreamBuilding: false
+    builders:
+    - shell:
+        command: echo hi
+    concurrentBuild: false
+    description: ''
+    disabled: false
+    label: debian-default
+    scm:
+      none: {}
+    scmCheckoutStrategy:
+      standard: {}
+
+  - kind: freeStyle
+    name: test-freestyle-local-sleep
+    blockBuildWhenDownstreamBuilding: false
+    blockBuildWhenUpstreamBuilding: false
+    buildDiscarder:
+      logRotator:
+        artifactDaysToKeep: -1
+        artifactNumToKeep: -1
+        daysToKeep: 2
+        numToKeep: 10
+    builders:
+    - shell:
+        command: sleep 600
+    concurrentBuild: false
+    description: ''
+    disabled: false
+    label: debian-default
+    scm:
+      none: {}
+    scmCheckoutStrategy:
+      standard: {}
+  - kind: pipeline
+    name: test-quick
+    concurrentBuild: false
+    definition:
+      cpsFlowDefinition:
+        sandbox: true
+        script: |
+          // Uses Declarative syntax to run commands inside a container.
+          pipeline {
+              agent none
+              stages {
+                  stage('Parallel Stage') {
+                      failFast true
+                      parallel {
+                          stage('MainRemote') {
+                              agent {
+                                  label 'debian-default'
+                              }
+                              steps {
+                                  container('debian') {
+                                      sh 'hostname'
+                                  }
+                              }
+                          }
+                          stage('MainLocal') {
+                              agent {
+                                  label 'debian-default'
+                              }
+                              steps {
+                                  container('debian') {
+                                      sh 'hostname'
+                                  }
+                              }
+                          }
+                      }
+                  }
+              }
+          }
+    description: ''
+    disabled: false
+    properties:
+    - buildDiscarder:
+        strategy:
+          logRotator:
+            artifactDaysToKeep: -1
+            artifactNumToKeep: -1
+            daysToKeep: 2
+            numToKeep: 10
+    resumeBlocked: false
+  - kind: pipeline
+    name: retry-on-disconnect
+    concurrentBuild: false
+    definition:
+      cpsFlowDefinition:
+        sandbox: true
+        script: |
+            // Uses Declarative syntax to run commands inside a container.
+            pipeline {
+                agent none
+                stages {
+                    stage('Main') {
+                        steps {
+                            retryOnDisconnect() {
+                                node('default') {
+                                    container('debian') {
+                                        echo "Kill or evict my pod, please"
+                                        sh 'hostname; sleep 30'
+                                        sh 'hostname; sleep 30'
+                                        sh 'hostname; sleep 30'
+                                        sh 'hostname; sleep 30'
+                                        sh 'hostname; sleep 30'
+                                        sh 'hostname; sleep 30'
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+    description: ''
+    disabled: false
+    properties:
+    - buildDiscarder:
+        strategy:
+          logRotator:
+            artifactDaysToKeep: -1
+            artifactNumToKeep: -1
+            daysToKeep: 2
+            numToKeep: 10
+    resumeBlocked: false
+  - kind: pipeline
+    name: test-wait
+    concurrentBuild: false
+    definition:
+      cpsFlowDefinition:
+        sandbox: true
+        script: |
+          // Uses Declarative syntax to run commands inside a container.
+          pipeline {
+              agent none
+              stages {
+                  stage('Parallel Stage') {
+                      failFast true
+                      parallel {
+                          stage('MainRemote') {
+                              agent {
+                                  label 'debian-default'
+                              }
+                              steps {
+                                  container('debian') {
+                                      sh 'hostname'
+                                      input 'waiting for user input'
+                                  }
+                              }
+                          }
+                          stage('MainLocal') {
+                              agent {
+                                  label 'debian-default'
+                              }
+                              steps {
+                                  container('debian') {
+                                      sh 'hostname'
+                                      input 'waiting for user input'
+                                  }
+                              }
+                          }
+                      }
+                  }
+              }
+          }
+    description: ''
+    disabled: false
+    properties:
+    - buildDiscarder:
+        strategy:
+          logRotator:
+            artifactDaysToKeep: -1
+            artifactNumToKeep: -1
+            daysToKeep: 2
+            numToKeep: 10
+    resumeBlocked: false
+  - kind: pipeline
+    name: test-wait-on-controller
+    concurrentBuild: false
+    definition:
+      cpsFlowDefinition:
+        sandbox: true
+        script: |
+          // Uses Declarative syntax to run commands inside a container.
+          pipeline {
+              agent none
+              stages {
+                  stage('Parallel Stage') {
+                      failFast true
+                      parallel {
+                          stage('MainRemote') {
+                              steps {
+                                  node('debian-default') {
+                                    container('debian') {
+                                        sh 'hostname'
+                                    }
+                                  }
+                                  input 'waiting for user input'
+                              }
+                          }
+                          stage('MainLocal') {
+                              steps {
+                                  node('debian-default') {
+                                    container('debian') {
+                                        sh 'hostname'
+                                    }
+                                  }
+                                  input 'waiting for user input'
+                              }
+                          }
+                      }
+                  }
+              }
+          }
+    description: ''
+    disabled: false
+    properties:
+    - buildDiscarder:
+        strategy:
+          logRotator:
+            artifactDaysToKeep: -1
+            artifactNumToKeep: -1
+            daysToKeep: 2
+            numToKeep: 10
+    resumeBlocked: false
+  - kind: pipeline
+    name: test-sleep
+    concurrentBuild: false
+    definition:
+      cpsFlowDefinition:
+        sandbox: true
+        script: |
+          // Uses Declarative syntax to run commands inside a container.
+          pipeline {
+              agent none
+              stages {
+                  stage('Parallel Stage') {
+                      failFast true
+                      parallel {
+                          stage('MainRemote') {
+                              agent {
+                                  label 'debian-default'
+                              }
+                              steps {
+                                  container('debian') {
+                                      sh 'hostname'
+                                      sh 'sleep 600'
+                                  }
+                              }
+                          }
+                          stage('MainLocal') {
+                              agent {
+                                  label 'debian-default'
+                              }
+                              steps {
+                                  container('debian') {
+                                      sh 'hostname'
+                                      sh 'sleep 600'
+                                  }
+                              }
+                          }
+                      }
+                  }
+              }
+          }
+    description: ''
+    disabled: false
+    properties:
+    - buildDiscarder:
+        strategy:
+          logRotator:
+            artifactDaysToKeep: -1
+            artifactNumToKeep: -1
+            daysToKeep: 2
+            numToKeep: 10
+    resumeBlocked: false
