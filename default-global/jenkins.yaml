@@ -28,6 +28,42 @@ unclassified:
               git:
                 credentialsId: "github-key"
                 remote: "git@github.com:ryecarrigan/pipeline-libraries.git"
+      - defaultVersion: "main"
+        implicit: true
+        name: "demo-library"
+        retriever:
+          modernSCM:
+            scm:
+              git:
+                credentialsId: "github-token-as-user-pass"
+                id: "a506da85-6f64-41c1-b0de-1769012a8dd8"
+                remote: "https://github.com/sboardwell/demos.git"
+                traits:
+                - "gitBranchDiscovery"
+      - defaultVersion: "main"
+        implicit: false
+        name: "demo-library-node-rebuild"
+        retriever:
+          modernSCM:
+            libraryPath: "experimental-node-rebuild/"
+            scm:
+              git:
+                credentialsId: "github-token-as-user-pass"
+                remote: "https://github.com/sboardwell/demos.git"
+                traits:
+                - "gitBranchDiscovery"
+      - defaultVersion: "main"
+        implicit: false
+        name: "demo-library"
+        retriever:
+          modernSCM:
+            libraryPath: "experimental-node-retry/"
+            scm:
+              git:
+                credentialsId: "github-token-as-user-pass"
+                remote: "https://github.com/sboardwell/demos.git"
+                traits:
+                - "gitBranchDiscovery"
   hibernationConfiguration:
     enabled: false
     gracePeriod: 300
