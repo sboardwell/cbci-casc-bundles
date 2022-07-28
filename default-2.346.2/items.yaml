@@ -1,0 +1,68 @@
+removeStrategy:
+  items: 'NONE'
+  rbac: 'SYNC'
+
+items:
+  - kind: freeStyle
+    name: test-fs
+    blockBuildWhenDownstreamBuilding: false
+    blockBuildWhenUpstreamBuilding: false
+    builders:
+    - shell:
+        command: echo hi
+    concurrentBuild: false
+    description: ''
+    disabled: false
+    label: default
+    scm:
+      none: {}
+    scmCheckoutStrategy:
+      standard: {}
+  - kind: pipeline
+    name: test-quick
+    concurrentBuild: false
+    definition:
+      cpsFlowDefinition:
+        sandbox: true
+        script: |
+          pipeline {
+              agent none
+              stages {
+                  stage('Parallel Stage') {
+                      failFast true
+                      parallel {
+                          stage('MainRemote') {
+                              agent {
+                                  label 'default'
+                              }
+                              steps {
+                                  container('debian') {
+                                      sh 'hostname'
+                                  }
+                              }
+                          }
+                          stage('MainLocal') {
+                              agent {
+                                  label 'default'
+                              }
+                              steps {
+                                  container('debian') {
+                                      sh 'hostname'
+                                  }
+                              }
+                          }
+                      }
+                  }
+              }
+          }
+    description: ''
+    disabled: false
+    properties:
+    - buildDiscarder:
+        strategy:
+          logRotator:
+            artifactDaysToKeep: -1
+            artifactNumToKeep: -1
+            daysToKeep: 2
+            numToKeep: 10
+    resumeBlocked: false
